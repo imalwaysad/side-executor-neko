@@ -1,0 +1,462 @@
+--[[
+    NekoUI Library
+    Created by: imalwaysad
+    Date: 2025-10-19
+]]
+
+local Library = {
+    Flags = {},
+    Theme = {
+        Main = Color3.fromRGB(25, 25, 25),
+        Secondary = Color3.fromRGB(35, 35, 35),
+        Accent = Color3.fromRGB(45, 45, 45),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        StrokeColor = Color3.fromRGB(60, 60, 60)
+    }
+}
+
+-- Services
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+
+-- Variables
+local Tween = TweenService.Create
+local Utils = {}
+
+-- Utilities
+function Utils:Create(class, properties)
+    local instance = Instance.new(class)
+    
+    for property, value in next, properties do
+        if property ~= "Parent" then
+            instance[property] = value
+        end
+    end
+    
+    if properties.Parent then
+        instance.Parent = properties.Parent
+    end
+    
+    return instance
+end
+
+function Utils:Tween(instance, properties, duration)
+    local tween = TweenService:Create(instance, TweenInfo.new(duration, Enum.EasingStyle.Quart), properties)
+    tween:Play()
+    return tween
+end
+
+function Utils:GetTime()
+    return os.date("%Y-%m-%d %H:%M:%S UTC")
+end
+
+-- Main Window Creation
+function Library:CreateWindow(config)
+    config = config or {}
+    config.Name = config.Name or "NekoUI"
+    config.Size = config.Size or UDim2.new(0, 600, 0, 400)
+    
+    -- Create ScreenGui
+    local ScreenGui = Utils:Create("ScreenGui", {
+        Name = "NekoUI",
+        Parent = CoreGui,
+        ResetOnSpawn = false
+    })
+    
+    -- Create Main Frame
+    local Main = Utils:Create("Frame", {
+        Name = "Main",
+        Parent = ScreenGui,
+        BackgroundColor3 = Library.Theme.Main,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0.5, -config.Size.X.Offset / 2, 0.5, -config.Size.Y.Offset / 2),
+        Size = config.Size,
+        ClipsDescendants = true
+    })
+    
+    -- Add Smooth Corners
+    local UICorner = Utils:Create("UICorner", {
+        Parent = Main,
+        CornerRadius = UDim.new(0, 8)
+    })
+    
+    -- Create Title Bar
+    local TitleBar = Utils:Create("Frame", {
+        Name = "TitleBar",
+        Parent = Main,
+        BackgroundColor3 = Library.Theme.Secondary,
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 0, 30)
+    })
+    
+    local TitleCorner = Utils:Create("UICorner", {
+        Parent = TitleBar,
+        CornerRadius = UDim.new(0, 8)
+    })
+    
+    -- Title Text
+    local Title = Utils:Create("TextLabel", {
+        Name = "Title",
+        Parent = TitleBar,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 10, 0, 0),
+        Size = UDim2.new(1, -20, 1, 0),
+        Font = Enum.Font.Cartoon,
+        Text = config.Name,
+        TextColor3 = Library.Theme.TextColor,
+        TextSize = 16,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    -- Time Display
+    local TimeDisplay = Utils:Create("TextLabel", {
+        Name = "TimeDisplay",
+        Parent = TitleBar,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0.5, 0, 0, 0),
+        Size = UDim2.new(0.5, -60, 1, 0),
+        Font = Enum.Font.Cartoon,
+        Text = Utils:GetTime(),
+        TextColor3 = Library.Theme.TextColor,
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Right
+    })
+    
+    -- Update Time
+    spawn(function()
+        while wait(1) do
+            TimeDisplay.Text = Utils:GetTime()
+        end
+    end)
+    
+    -- Close Button
+    local CloseButton = Utils:Create("TextButton", {
+        Name = "CloseButton",
+        Parent = TitleBar,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(1, -25, 0, 5),
+        Size = UDim2.new(0, 20, 0, 20),
+        Font = Enum.Font.Cartoon,
+        Text = "×",
+        TextColor3 = Library.Theme.TextColor,
+        TextSize = 20
+    })
+    
+    -- Minimize Button
+    local MinimizeButton = Utils:Create("TextButton", {
+        Name = "MinimizeButton",
+        Parent = TitleBar,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(1, -50, 0, 5),
+        Size = UDim2.new(0, 20, 0, 20),
+        Font = Enum.Font.Cartoon,
+        Text = "-",
+        TextColor3 = Library.Theme.TextColor,
+        TextSize = 20
+    })
+    
+    -- Content Container
+    local ContentContainer = Utils:Create("Frame", {
+        Name = "ContentContainer",
+        Parent = Main,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 0, 0, 35),
+        Size = UDim2.new(1, 0, 1, -35),
+        ClipsDescendants = true
+    })
+    
+    -- Tab Container
+    local TabContainer = Utils:Create("Frame", {
+        Name = "TabContainer",
+        Parent = ContentContainer,
+        BackgroundColor3 = Library.Theme.Secondary,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 5, 0, 5),
+        Size = UDim2.new(0, 120, 1, -10)
+    })
+    
+    local TabContainerCorner = Utils:Create("UICorner", {
+        Parent = TabContainer,
+        CornerRadius = UDim.new(0, 6)
+    })
+    
+    local TabList = Utils:Create("ScrollingFrame", {
+        Name = "TabList",
+        Parent = TabContainer,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 5, 0, 5),
+        Size = UDim2.new(1, -10, 1, -10),
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ScrollBarThickness = 2,
+        ScrollBarImageColor3 = Library.Theme.Accent
+    })
+    
+    local TabListLayout = Utils:Create("UIListLayout", {
+        Parent = TabList,
+        Padding = UDim.new(0, 5),
+        SortOrder = Enum.SortOrder.LayoutOrder
+    })
+    
+    -- Tab Content Container
+    local TabContentContainer = Utils:Create("Frame", {
+        Name = "TabContentContainer",
+        Parent = ContentContainer,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 130, 0, 5),
+        Size = UDim2.new(1, -135, 1, -10)
+    })
+    
+    -- Window Functionality
+    local minimized = false
+    local dragging = false
+    local dragInput
+    local dragStart
+    local startPos
+    
+    -- Dragging
+    TitleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = Main.Position
+        end
+    end)
+    
+    TitleBar.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    RunService.RenderStepped:Connect(function()
+        if dragging and dragInput then
+            local delta = dragInput.Position - dragStart
+            Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    -- Minimize Button
+    MinimizeButton.MouseButton1Click:Connect(function()
+        minimized = not minimized
+        if minimized then
+            Utils:Tween(Main, {Size = UDim2.new(0, config.Size.X.Offset, 0, 30)}, 0.3)
+        else
+            Utils:Tween(Main, {Size = config.Size}, 0.3)
+        end
+    end)
+    
+    -- Close Button
+    CloseButton.MouseButton1Click:Connect(function()
+        local Confirmation = Utils:Create("Frame", {
+            Name = "Confirmation",
+            Parent = Main,
+            BackgroundColor3 = Library.Theme.Main,
+            BorderSizePixel = 0,
+            Position = UDim2.new(0.5, -100, 0.5, -50),
+            Size = UDim2.new(0, 200, 0, 100),
+            ZIndex = 2
+        })
+        
+        local ConfirmationCorner = Utils:Create("UICorner", {
+            Parent = Confirmation,
+            CornerRadius = UDim.new(0, 6)
+        })
+        
+        local ConfirmationText = Utils:Create("TextLabel", {
+            Parent = Confirmation,
+            BackgroundTransparency = 1,
+            Position = UDim2.new(0, 0, 0, 10),
+            Size = UDim2.new(1, 0, 0, 40),
+            Font = Enum.Font.Cartoon,
+            Text = "Are you sure you want to close?",
+            TextColor3 = Library.Theme.TextColor,
+            TextSize = 16,
+            ZIndex = 2
+        })
+        
+        local YesButton = Utils:Create("TextButton", {
+            Parent = Confirmation,
+            BackgroundColor3 = Library.Theme.Secondary,
+            Position = UDim2.new(0.1, 0, 0.6, 0),
+            Size = UDim2.new(0.35, 0, 0, 25),
+            Font = Enum.Font.Cartoon,
+            Text = "Yes",
+            TextColor3 = Library.Theme.TextColor,
+            TextSize = 14,
+            ZIndex = 2
+        })
+        
+        local NoButton = Utils:Create("TextButton", {
+            Parent = Confirmation,
+            BackgroundColor3 = Library.Theme.Secondary,
+            Position = UDim2.new(0.55, 0, 0.6, 0),
+            Size = UDim2.new(0.35, 0, 0, 25),
+            Font = Enum.Font.Cartoon,
+            Text = "No",
+            TextColor3 = Library.Theme.TextColor,
+            TextSize = 14,
+            ZIndex = 2
+        })
+        
+        Utils:Create("UICorner", {
+            Parent = YesButton,
+            CornerRadius = UDim.new(0, 4)
+        })
+        
+        Utils:Create("UICorner", {
+            Parent = NoButton,
+            CornerRadius = UDim.new(0, 4)
+        })
+        
+        YesButton.MouseButton1Click:Connect(function()
+            Utils:Tween(Main, {Size = UDim2.new(0, 0, 0, 0)}, 0.3).Completed:Connect(function()
+                ScreenGui:Destroy()
+            end)
+        end)
+        
+        NoButton.MouseButton1Click:Connect(function()
+            Confirmation:Destroy()
+        end)
+    end)
+    
+    -- Tab System
+    local TabLibrary = {}
+    local Tabs = {}
+    local SelectedTab = nil
+    
+    function TabLibrary:CreateTab(name)
+        local Tab = Utils:Create("TextButton", {
+            Name = name,
+            Parent = TabList,
+            BackgroundColor3 = Library.Theme.Accent,
+            Size = UDim2.new(1, 0, 0, 30),
+            Font = Enum.Font.Cartoon,
+            Text = name,
+            TextColor3 = Library.Theme.TextColor,
+            TextSize = 14,
+            AutoButtonColor = false
+        })
+        
+        Utils:Create("UICorner", {
+            Parent = Tab,
+            CornerRadius = UDim.new(0, 4)
+        })
+        
+        local TabContent = Utils:Create("ScrollingFrame", {
+            Name = name.."Content",
+            Parent = TabContentContainer,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0),
+            CanvasSize = UDim2.new(0, 0, 0, 0),
+            ScrollBarThickness = 2,
+            ScrollBarImageColor3 = Library.Theme.Accent,
+            Visible = false
+        })
+        
+        local ContentList = Utils:Create("UIListLayout", {
+            Parent = TabContent,
+            Padding = UDim.new(0, 5),
+            SortOrder = Enum.SortOrder.LayoutOrder
+        })
+        
+        ContentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            TabContent.CanvasSize = UDim2.new(0, 0, 0, ContentList.AbsoluteContentSize.Y + 5)
+        end)
+        
+        Tab.MouseButton1Click:Connect(function()
+            if SelectedTab == Tab then return end
+            
+            if SelectedTab then
+                Utils:Tween(SelectedTab, {BackgroundColor3 = Library.Theme.Accent}, 0.2)
+                Tabs[SelectedTab].Content.Visible = false
+            end
+            
+            SelectedTab = Tab
+            Utils:Tween(Tab, {BackgroundColor3 = Library.Theme.Secondary}, 0.2)
+            TabContent.Visible = true
+        end)
+        
+        Tabs[Tab] = {
+            Content = TabContent
+        }
+        
+        if not SelectedTab then
+            SelectedTab = Tab
+            Utils:Tween(Tab, {BackgroundColor3 = Library.Theme.Secondary}, 0.2)
+            TabContent.Visible = true
+        end
+        
+        -- Elements
+        local ElementLibrary = {}
+        
+        function ElementLibrary:CreateButton(text, callback)
+            callback = callback or function() end
+            
+            local Button = Utils:Create("TextButton", {
+                Parent = TabContent,
+                BackgroundColor3 = Library.Theme.Secondary,
+                Size = UDim2.new(1, -10, 0, 30),
+                Font = Enum.Font.Cartoon,
+                Text = text,
+                TextColor3 = Library.Theme.TextColor,
+                TextSize = 14,
+                AutoButtonColor = false
+            })
+            
+            Utils:Create("UICorner", {
+                Parent = Button,
+                CornerRadius = UDim.new(0, 4)
+            })
+            
+            Button.MouseButton1Click:Connect(function()
+                callback()
+            end)
+            
+            return Button
+        end
+        
+        function ElementLibrary:CreateTextBox(placeholder, callback)
+            callback = callback or function() end
+            
+            local TextBox = Utils:Create("TextBox", {
+                Parent = TabContent,
+                BackgroundColor3 = Library.Theme.Secondary,
+                Size = UDim2.new(1, -10, 0, 30),
+                Font = Enum.Font.Cartoon,
+                PlaceholderText = placeholder,
+                Text = "",
+                TextColor3 = Library.Theme.TextColor,
+                TextSize = 14,
+                ClearTextOnFocus = false
+            })
+            
+            Utils:Create("UICorner", {
+                Parent = TextBox,
+                CornerRadius = UDim.new(0, 4)
+            })
+            
+            TextBox.FocusLost:Connect(function(enterPressed)
+                if enterPressed then
+                    callback(TextBox.Text)
+                end
+            end)
+            
+            return TextBox
+        end
+        
+        return ElementLibrary
+    end
+    
+    return TabLibrary
+end
+
+return Library
