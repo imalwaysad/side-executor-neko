@@ -1,9 +1,4 @@
---[[
-    NekoUI Library
-    Created by: imalwaysad
-    Date: 2025-10-19
-]]
-
+-- NekoUI Script
 local Library = {
     Flags = {},
     Theme = {
@@ -458,5 +453,42 @@ function Library:CreateWindow(config)
     
     return TabLibrary
 end
+
+-- Now create and use the UI
+local Window = Library:CreateWindow({
+    Name = "Neko's Side Project #1"
+})
+
+-- Create tabs
+local MainTab = Window:CreateTab("Main")
+local ScriptTab = Window:CreateTab("Scripts")
+local SettingsTab = Window:CreateTab("Settings")
+
+-- Add elements to Main tab
+MainTab:CreateTextBox("Enter Script", function(text)
+    loadstring(text)()
+end)
+
+MainTab:CreateButton("Execute", function()
+    -- Add your execute logic here
+    print("Script executed!")
+end)
+
+MainTab:CreateButton("Clear", function()
+    -- Add your clear logic here
+    print("Cleared!")
+end)
+
+-- Add elements to Scripts tab
+ScriptTab:CreateButton("Main Script", function()
+   loadstring(game:HttpGet("https://raw.githubusercontent.com/imalwaysad/neko-hub-v2/refs/heads/main/neko-hub-v2"))()
+end)
+
+
+-- Add elements to Settings tab
+SettingsTab:CreateButton("Clear Cache", function()
+    -- Add your cache clearing logic here
+    print("Cache cleared!")
+end)
 
 return Library
